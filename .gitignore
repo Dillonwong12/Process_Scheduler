@@ -1,3 +1,5 @@
 *.o
 allocate
+circular_array
 cases
+.vscode

@@ -3,10 +3,14 @@
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
+#include <getopt.h>
 #include <math.h>
+#include "circular_array.h"
 
 // The number of expected command line arguments
 #define N_ARGC 9
+// The initial size of the `processes` array
+#define INIT_SIZE 5
 // The scale by which the `processes` array is dynamically reallocated 
 #define REALLOC_SCALE 2
 // The number of attributes per process
@@ -16,24 +20,13 @@
 // The maximum length of a line from an input file
 #define MAX_LINE_LEN 35
 
-// Each process has an arrival time, a unique name, a service time, and a memory requirement
-typedef struct process{
-    int time_arr;
-    char name[MAX_NAME_LEN];
-    int serv_time;
-    int mem_req;
-}process_t;
-
-
 int main(int argc, char* argv[]){
     int opt;
     char *filename;
     char *scheduler;
     char *memory_strategy;
     int quantum;
-
-    size_t n_processes = 0;
-    size_t processes_size = 5;
+    int simulation_time = 0;
 
     if (argc != N_ARGC){
         fprintf(stderr, "Error: malformed command line arguments\n");
@@ -59,9 +52,6 @@ int main(int argc, char* argv[]){
     printf("scheduler: %s\n", scheduler);
     printf("memory-strategy: %s\n", memory_strategy);
     printf("quantum: %d\n", quantum);
-    
-    process_t *processes = (process_t*)malloc(sizeof(process_t) * processes_size);
-    assert(processes != NULL);
 
     FILE *fp = fopen(filename, "r");
     if (fp == NULL){
@@ -70,29 +60,43 @@ int main(int argc, char* argv[]){
     }
 
     char line[MAX_LINE_LEN];
-    int time_arr, serv_time, mem_req;
+    unsigned int time_arr, serv_time;
     char name[MAX_NAME_LEN];
+    int mem_req;
 
-    while (fgets(line, MAX_LINE_LEN, fp)){
-        sscanf(line, "%d %s %d %d", &time_arr, name, &serv_time, &mem_req);
+    /*while (fgets(line, MAX_LINE_LEN, fp)){
+        sscanf(line, "%u %s %u %d", &time_arr, name, &serv_time, &mem_req);
         if (n_processes == processes_size){
             processes_size *= REALLOC_SCALE;
             processes = (process_t*)realloc(processes, sizeof(process_t) * processes_size);
             assert(processes);
         }
-        printf("%zu\n", n_processes);
         processes[n_processes].time_arr = time_arr;
         strcpy(processes[n_processes].name, name);
         processes[n_processes].serv_time = serv_time;
         processes[n_processes].mem_req = mem_req;
         n_processes++;
+    }*/
+
+    /*for (int i = 0; i < n_processes; i++){
+        printf("%u %s %u %d\n", processes[i].time_arr, processes[i].name, processes[i].serv_time, processes[i].mem_req);
+    }*/
+
+    struct circular_array *circularArray = new_circular_array();
+
+    while (fgets(line, MAX_LINE_LEN, fp)){
+        sscanf(line, "%u %s %u %d", &time_arr, name, &serv_time, &mem_req);
+        process_t process;
+        process.time_arr = time_arr;
+        strcpy(process.name, name);
+        process.serv_time = serv_time;
+        process.mem_req = mem_req;
+        enqueue(circularArray, &process);
     }
 
-    for (int i = 0; i < n_processes; i++){
-        printf("%d %s %d %d\n", processes[i].time_arr, processes[i].name, processes[i].serv_time, processes[i].mem_req);
-    } 
-
-    free(processes);
+    print_array(circularArray);
+    free_array(circularArray);
     fclose(fp);
     return 0;
 }
+

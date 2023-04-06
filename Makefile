@@ -1,5 +1,11 @@
-allocate: allocate.c
-	gcc -Wall -o allocate allocate.c
+allocate: allocate.o circular_array.o
+	gcc -Wall -o allocate allocate.o circular_array.o -g
+
+allocate.o: allocate.c
+	gcc -Wall -c allocate.c -g
+
+circular_array.o: circular_array.c
+	gcc -Wall -c circular_array.c -g
 
 clean:
-	rm -rf allocate
+	rm -rf allocate circular_array *.o
