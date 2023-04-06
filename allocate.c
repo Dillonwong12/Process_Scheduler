@@ -93,7 +93,12 @@ int main(int argc, char* argv[]){
         process.mem_req = mem_req;
         enqueue(circularArray, &process);
     }
+    printf("total processes: %d\n", processes_size(circularArray));
 
+    print_array(circularArray);
+    dequeue(circularArray);
+    dequeue(circularArray);
+    dequeue(circularArray);
     print_array(circularArray);
     free_array(circularArray);
     fclose(fp);

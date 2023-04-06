@@ -5,7 +5,7 @@
 // The maximum length of process names
 #define MAX_NAME_LEN 9
 // The initial indexes of `head` and `tail`
-#define INIT_IDX -1
+#define INIT_IDX 0 
 
 struct circular_array;
 
@@ -22,6 +22,8 @@ struct circular_array *new_circular_array();
 process_t *new_process(unsigned int time_arr, char *name, unsigned int serv_time, int mem_req);
 
 void enqueue(struct circular_array *circularArray, process_t *process);
+
+process_t *dequeue(struct circular_array *circularArray);
 
 int processes_size(struct circular_array *circularArray);
 
