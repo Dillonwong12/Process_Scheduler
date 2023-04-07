@@ -7,8 +7,6 @@
 // The initial indexes of `head` and `tail`
 #define INIT_IDX 0 
 
-struct circular_array;
-
 // Each process has an arrival time, a unique name, a service time, and a memory requirement
 typedef struct process{
     unsigned int time_arr;
@@ -16,6 +14,14 @@ typedef struct process{
     unsigned int serv_time;
     int mem_req;
 }process_t;
+
+struct circular_array {
+    int head;
+    int tail;
+    int capacity;
+    int size;
+    process_t *processes;
+};
 
 struct circular_array *new_circular_array();
 
@@ -25,7 +31,11 @@ void enqueue(struct circular_array *circularArray, process_t *process);
 
 process_t *dequeue(struct circular_array *circularArray);
 
-int processes_size(struct circular_array *circularArray);
+process_t *get_process(struct circular_array *circularArray, int index);
+
+process_t *remove_process(struct circular_array *circularArray, int index);
+
+int qsort_comparator(const void *process_1, const void *process_2);
 
 void print_array(struct circular_array *circularArray);
 
