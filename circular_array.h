@@ -13,6 +13,7 @@ typedef struct process{
     char name[MAX_NAME_LEN];
     unsigned int serv_time;
     int mem_req;
+    unsigned int serv_time_remaining;
 }process_t;
 
 struct circular_array {
