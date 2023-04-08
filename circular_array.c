@@ -117,4 +117,5 @@ void print_array(struct circular_array *circularArray){
 
 void free_array(struct circular_array *circularArray){
     free(circularArray->processes);
+    free(circularArray);
 }

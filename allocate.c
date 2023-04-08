@@ -15,8 +15,8 @@
 #define MAX_LINE_LEN 35
 
 // Scheduling Algorithms
-#define SJF = "SJF"
-#define RR = "RR"
+#define SJF "SJF"
+#define RR "RR"
 
 // Memory strategies
 #define INF "infinite"
@@ -99,12 +99,11 @@ void manage_processes(FILE *fp, char *scheduler, char *memory_strategy, int quan
                 unsigned int turnaround_time = simulation_time - running_process->time_arr;
                 total_turnaround += turnaround_time;
                 
-                float overhead_time = turnaround_time/(double)running_process->serv_time;
+                double overhead_time = turnaround_time/(double)running_process->serv_time;
                 total_overhead += overhead_time;
                 if (overhead_time > max_overhead){
                     max_overhead = overhead_time;
                 }
-
                 num_processes++;
                 free(running_process);
                 running_process = NULL;
@@ -154,29 +153,53 @@ void manage_processes(FILE *fp, char *scheduler, char *memory_strategy, int quan
 }
 
 void schedule(struct circular_array *ready_queue, char *scheduler, process_t **running_process, long simulation_time){
-    if (*running_process == NULL && ready_queue->size > 0){
-        // Make a temporary array to use with qsort()
-        process_t *temp_array = (process_t*)malloc(sizeof(process_t)*ready_queue->size);
-        for (int i = 0; i < ready_queue->size; i++){
-            temp_array[i].time_arr = get_process(ready_queue, i)->time_arr;
-            strcpy(temp_array[i].name, get_process(ready_queue, i)->name);
-            temp_array[i].serv_time = get_process(ready_queue, i)->serv_time;
-            temp_array[i].serv_time_remaining = get_process(ready_queue, i)->serv_time_remaining;
-            temp_array[i].mem_req = get_process(ready_queue, i)->mem_req;
-        }
+    if (strcmp(scheduler, SJF) == 0){
+        if (*running_process == NULL && ready_queue->size > 0){
+            // Make a temporary array to use with qsort()
+            process_t *temp_array = (process_t*)malloc(sizeof(process_t)*ready_queue->size);
+            for (int i = 0; i < ready_queue->size; i++){
+                temp_array[i].time_arr = get_process(ready_queue, i)->time_arr;
+                strcpy(temp_array[i].name, get_process(ready_queue, i)->name);
+                temp_array[i].serv_time = get_process(ready_queue, i)->serv_time;
+                temp_array[i].serv_time_remaining = get_process(ready_queue, i)->serv_time_remaining;
+                temp_array[i].mem_req = get_process(ready_queue, i)->mem_req;
+            }
 
-        qsort(temp_array, ready_queue->size, sizeof(process_t), qsort_comparator);
-        char *process_to_schedule = temp_array[0].name;
+            qsort(temp_array, ready_queue->size, sizeof(process_t), qsort_comparator);
+            char *process_to_schedule = temp_array[0].name;
 
-        for (int i = 0; i < ready_queue->size; i++){
-            if (strcmp(get_process(ready_queue, i)->name, process_to_schedule) == 0){
-                *running_process = remove_process(ready_queue, i);
-                printf("%ld,RUNNING,process_name=%s,remaining_time=%ld\n", simulation_time, (*running_process)->name, (*running_process)->serv_time_remaining);
+            for (int i = 0; i < ready_queue->size; i++){
+                if (strcmp(get_process(ready_queue, i)->name, process_to_schedule) == 0){
+                    *running_process = remove_process(ready_queue, i);
+                    printf("%ld,RUNNING,process_name=%s,remaining_time=%ld\n", simulation_time, (*running_process)->name, (*running_process)->serv_time_remaining);
 
-                free(temp_array);
-                return;
+                    free(temp_array);
+                    return;
+                }
             }
         }
+        
+    }
+    else {
+        // Default to RR if scheduler isn't `SJF`
+
+        // If there are no other READY processes, there are no other processes to schedule so just return
+        if (ready_queue->size == 0){
+            return;
+        }
+
+        // If there are other READY processes but no current `running_process`, dequeue from `ready_queue`
+        if (*running_process == NULL){
+            *running_process = dequeue(ready_queue);
+            printf("%ld,RUNNING,process_name=%s,remaining_time=%ld\n", simulation_time, (*running_process)->name, (*running_process)->serv_time_remaining);
+            return;
+        }
+
+        // If there are other READY processes, the current `running_process` enters the `ready_queue`,
+        // and another process is scheduled to run
+        enqueue(ready_queue, *running_process);
+        *running_process = dequeue(ready_queue);
+        printf("%ld,RUNNING,process_name=%s,remaining_time=%ld\n", simulation_time, (*running_process)->name, (*running_process)->serv_time_remaining);
     }
     return;
 }
@@ -184,6 +207,6 @@ void schedule(struct circular_array *ready_queue, char *scheduler, process_t **r
 void print_performance_stats(long total_turnaround, int num_processes, double total_overhead, double max_overhead, long simulation_time){
     
     printf("Turnaround time %.0f\n", ceil(total_turnaround/(double)num_processes));
-    printf("Time overhead %.2f %.2f\n", max_overhead, total_overhead/num_processes);
+    printf("Time overhead %.2f %.2f\n", round(max_overhead*100)/100, round((total_overhead/(double)num_processes)*100)/100);
     printf("Makespan %ld\n", simulation_time);
 }
