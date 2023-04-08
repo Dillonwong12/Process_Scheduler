@@ -70,8 +70,9 @@ void manage_processes(FILE *fp, char *scheduler, char *memory_strategy, int quan
     
     long last_fp = 0;
     char line[MAX_LINE_LEN];
-    unsigned int time_arr, serv_time;
+    unsigned int time_arr;
     char name[MAX_NAME_LEN];
+    long serv_time;
     int mem_req;
     process_t *running_process = NULL;
 
@@ -88,6 +89,9 @@ void manage_processes(FILE *fp, char *scheduler, char *memory_strategy, int quan
     while (1){
         if (running_process != NULL){
             running_process->serv_time_remaining -= quantum;
+            //printf("%ld,RUNNING,process_name=%s,remaining_time=%ld\n", simulation_time, running_process->name, running_process->serv_time_remaining);
+            //printf("head %d, tail %d\n", ready_queue->head, ready_queue->tail);
+            
             if (running_process->serv_time_remaining <= 0){
                 // This process has been completed
                 printf("%ld,FINISHED,process_name=%s,proc_remaining=%d\n", simulation_time, running_process->name, input_queue->size+ready_queue->size);
@@ -102,12 +106,13 @@ void manage_processes(FILE *fp, char *scheduler, char *memory_strategy, int quan
                 }
 
                 num_processes++;
+                free(running_process);
                 running_process = NULL;
             }
         }
 
         while (fgets(line, MAX_LINE_LEN, fp)){
-            sscanf(line, "%u %s %u %d", &time_arr, name, &serv_time, &mem_req);
+            sscanf(line, "%u %s %ld %d", &time_arr, name, &serv_time, &mem_req);
             if (time_arr <= simulation_time){
                 process_t process;
                 process.time_arr = time_arr;
@@ -130,6 +135,7 @@ void manage_processes(FILE *fp, char *scheduler, char *memory_strategy, int quan
                 process_t *ready_process = dequeue(input_queue);
                 enqueue(ready_queue, ready_process);
             }
+            
         }
         
         schedule(ready_queue, scheduler, &running_process, simulation_time);
@@ -165,7 +171,7 @@ void schedule(struct circular_array *ready_queue, char *scheduler, process_t **r
         for (int i = 0; i < ready_queue->size; i++){
             if (strcmp(get_process(ready_queue, i)->name, process_to_schedule) == 0){
                 *running_process = remove_process(ready_queue, i);
-                printf("%ld,RUNNING,process_name=%s,remaining_time=%u\n", simulation_time, (*running_process)->name, (*running_process)->serv_time_remaining);
+                printf("%ld,RUNNING,process_name=%s,remaining_time=%ld\n", simulation_time, (*running_process)->name, (*running_process)->serv_time_remaining);
 
                 free(temp_array);
                 return;

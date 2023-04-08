@@ -19,7 +19,8 @@ struct circular_array *new_circular_array(){
 
 void enqueue(struct circular_array *circularArray, process_t *process){
     // Queue is full, reallocate memory
-    if ((circularArray->size > 0) && ((circularArray->tail)%circularArray->capacity) == circularArray->head){
+    if (circularArray->size == circularArray->capacity){
+        
         int prev_size = circularArray->capacity;
         circularArray->capacity *= REALLOC_SCALE;
         circularArray->processes = (process_t*)realloc(circularArray->processes, sizeof(process_t)*circularArray->capacity);
@@ -27,10 +28,11 @@ void enqueue(struct circular_array *circularArray, process_t *process){
 
         // If the head was in front of the tail, shift all the processes from before the head to after it
         if (circularArray->head >= circularArray->tail){
-            circularArray->tail = circularArray->tail + prev_size;
             for (int i = 0; i < circularArray->tail; i++){
+                //printf("writing index %d to index %d\n", i, prev_size+i);
                 circularArray->processes[prev_size+i] = circularArray->processes[i];
             }
+            circularArray->tail = circularArray->tail + prev_size;
         }   
     }
     circularArray->processes[circularArray->tail] = *process;
@@ -43,10 +45,15 @@ process_t *dequeue(struct circular_array *circularArray){
         return 0;
     }
     else {
+        process_t *copy = (process_t *)malloc(sizeof(process_t));
+        copy->time_arr = circularArray->processes[circularArray->head].time_arr;
+        strcpy(copy->name, circularArray->processes[circularArray->head].name);
+        copy->serv_time = circularArray->processes[circularArray->head].serv_time;
+        copy->serv_time_remaining = circularArray->processes[circularArray->head].serv_time_remaining;
+        copy->mem_req = circularArray->processes[circularArray->head].mem_req;
         circularArray->size--;
-        process_t *process = &(circularArray->processes[circularArray->head]);
         circularArray->head = (circularArray->head + 1)%circularArray->capacity;
-        return process;
+        return copy;
     }
 }
 
@@ -95,15 +102,15 @@ void print_array(struct circular_array *circularArray){
     else if (circularArray->head < circularArray->tail){
         for (int i = circularArray->head; i < circularArray->tail; i++){
             printf("index %d: ", i);
-            printf("%u %s %u %d\n", circularArray->processes[i].time_arr, circularArray->processes[i].name, circularArray->processes[i].serv_time, circularArray->processes[i].mem_req);
+            printf("%u %s %ld %d\n", circularArray->processes[i].time_arr, circularArray->processes[i].name, circularArray->processes[i].serv_time, circularArray->processes[i].mem_req);
         }
     }
     else {
         for (int i = circularArray->head; i < circularArray->capacity; i++){
-            printf("%u %s %u %d\n", circularArray->processes[i].time_arr, circularArray->processes[i].name, circularArray->processes[i].serv_time, circularArray->processes[i].mem_req);
+            printf("index %d: %u %s %ld %d\n", i, circularArray->processes[i].time_arr, circularArray->processes[i].name, circularArray->processes[i].serv_time, circularArray->processes[i].mem_req);
         }
         for (int i = 0; i < circularArray->tail; i++){
-            printf("%u %s %u %d\n", circularArray->processes[i].time_arr, circularArray->processes[i].name, circularArray->processes[i].serv_time, circularArray->processes[i].mem_req);
+            printf("index %d: %u %s %ld %d\n", i, circularArray->processes[i].time_arr, circularArray->processes[i].name, circularArray->processes[i].serv_time, circularArray->processes[i].mem_req);
         }
     }
 }
