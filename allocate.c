@@ -108,13 +108,10 @@ void manage_processes(FILE *fp, char *scheduler, char *memory_strategy, int quan
                     max_overhead = overhead_time;
                 }
                 num_processes++;
-                deallocate(memory, running_process);
-                /*if (simulation_time == 210){
-                    for (int i = 0; i < MEM_SIZE; i++){
-                        printf("%c ", memory->mem_array[i]);
-                    }
-                    printf("\n");
-                }*/
+                if (strcmp(memory_strategy, BF) == 0){
+                    deallocate(memory, running_process);
+                }
+                
                 free(running_process);
                 running_process = NULL;
             }
@@ -168,7 +165,6 @@ void allocate_memory(circ_array_t *input_queue, circ_array_t *ready_queue, memor
     }
     else {
         // Default to Best-Fit memory allocation algorithm otherwise
-        int input_queue_size = input_queue->size;
         for (int i = 0; i < input_queue->size; i++){
             process_t *process = get_process(input_queue, i);
             if (allocate_best_fit(memory, process) != INIT_ADDR){
