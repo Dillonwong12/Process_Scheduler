@@ -1,11 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <string.h>
 #include "circular_array.h"
 
-struct circular_array *new_circular_array(){
-    struct circular_array *circularArray = (struct circular_array*)malloc(sizeof(struct circular_array));
+circ_array_t *new_circular_array(){
+    circ_array_t *circularArray = (circ_array_t*)malloc(sizeof(circ_array_t));
     assert(circularArray);
     circularArray->processes = (process_t*)malloc(sizeof(process_t) * INIT_SIZE);
     assert(circularArray->processes);
@@ -17,7 +13,7 @@ struct circular_array *new_circular_array(){
     return circularArray;
 }
 
-void enqueue(struct circular_array *circularArray, process_t *process){
+void enqueue(circ_array_t *circularArray, process_t *process){
     // Queue is full, reallocate memory
     if (circularArray->size == circularArray->capacity){
         
@@ -40,7 +36,7 @@ void enqueue(struct circular_array *circularArray, process_t *process){
     circularArray->size++;
 }
 
-process_t *dequeue(struct circular_array *circularArray){
+process_t *dequeue(circ_array_t *circularArray){
     if (circularArray->size == 0){
         return 0;
     }
@@ -51,25 +47,24 @@ process_t *dequeue(struct circular_array *circularArray){
         copy->serv_time = circularArray->processes[circularArray->head].serv_time;
         copy->serv_time_remaining = circularArray->processes[circularArray->head].serv_time_remaining;
         copy->mem_req = circularArray->processes[circularArray->head].mem_req;
+        copy->mem_addr = circularArray->processes[circularArray->head].mem_addr;
         circularArray->size--;
         circularArray->head = (circularArray->head + 1)%circularArray->capacity;
         return copy;
     }
 }
 
-process_t *get_process(struct circular_array *circularArray, int index){
+process_t *get_process(circ_array_t *circularArray, int index){
     return &circularArray->processes[(circularArray->head+index)%circularArray->capacity];
 }
 
-process_t *remove_process(struct circular_array *circularArray, int index){
+process_t *remove_process(circ_array_t *circularArray, int index){
     if (circularArray->size == 0){
         return 0;
     }
     else {
         //printf("removing process at index %d + %d = %d\n", circularArray->head, index, (circularArray->head+index)%circularArray->capacity);
-        
         for (int i = index; i > 0; i--){
-            
             process_t tmp = circularArray->processes[(circularArray->head+i)%circularArray->capacity];
             circularArray->processes[(circularArray->head+i)%circularArray->capacity] = circularArray->processes[(circularArray->head+i-1)%circularArray->capacity];
             circularArray->processes[(circularArray->head+i-1)%circularArray->capacity] = tmp;
@@ -95,7 +90,7 @@ int qsort_comparator(const void *process_1, const void *process_2){
     }
 }
 
-void print_array(struct circular_array *circularArray){
+void print_array(circ_array_t *circularArray){
     if (circularArray->size == 0){
         return;
     }
@@ -115,7 +110,7 @@ void print_array(struct circular_array *circularArray){
     }
 }
 
-void free_array(struct circular_array *circularArray){
+void free_array(circ_array_t *circularArray){
     free(circularArray->processes);
     free(circularArray);
 }

@@ -1,3 +1,11 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <string.h>
+
+#ifndef __CIRCULAR_ARRAY_H__
+#define __CIRCULAR_ARRAY_H__
+
 // The initial size of the `processes` array
 #define INIT_SIZE 5
 // The scale by which the `processes` array is dynamically reallocated 
@@ -14,30 +22,33 @@ typedef struct process{
     long serv_time;
     int mem_req;
     long serv_time_remaining;
-}process_t;
+    int mem_addr;
+} process_t;
 
-struct circular_array {
+typedef struct circular_array{
     int head;
     int tail;
     int capacity;
     int size;
     process_t *processes;
-};
+} circ_array_t;
 
-struct circular_array *new_circular_array();
+circ_array_t *new_circular_array();
 
 process_t *new_process(unsigned int time_arr, char *name, unsigned int serv_time, int mem_req);
 
-void enqueue(struct circular_array *circularArray, process_t *process);
+void enqueue(circ_array_t *circularArray, process_t *process);
 
-process_t *dequeue(struct circular_array *circularArray);
+process_t *dequeue(circ_array_t *circularArray);
 
-process_t *get_process(struct circular_array *circularArray, int index);
+process_t *get_process(circ_array_t *circularArray, int index);
 
-process_t *remove_process(struct circular_array *circularArray, int index);
+process_t *remove_process(circ_array_t *circularArray, int index);
 
 int qsort_comparator(const void *process_1, const void *process_2);
 
-void print_array(struct circular_array *circularArray);
+void print_array(circ_array_t *circularArray);
 
-void free_array(struct circular_array *circularArray);
+void free_array(circ_array_t *circularArray);
+
+#endif

@@ -6,6 +6,7 @@
 #include <getopt.h>
 #include <math.h>
 #include "circular_array.h"
+#include "memory.h"
 
 // The number of expected command line arguments
 #define N_ARGC 9
@@ -23,7 +24,8 @@
 #define BF "best-fit"
 
 void manage_processes(FILE *fp, char *scheduler, char *memory_strategy, int quantum);
-void schedule(struct circular_array *ready_queue, char *scheduler, process_t **running_process, long simulation_time);
+void allocate_memory(circ_array_t *input_queue, circ_array_t *ready_queue, memory_t *memory, char *memory_strategy, long simulation_time);
+void schedule(circ_array_t *ready_queue, char *scheduler, process_t **running_process, long simulation_time);
 void print_performance_stats(long total_turnaround, int num_processes, double total_overhead, double max_overhead, long simulation_time);
 
 int main(int argc, char* argv[]){
@@ -83,8 +85,9 @@ void manage_processes(FILE *fp, char *scheduler, char *memory_strategy, int quan
     double total_overhead = 0;
     double max_overhead = 0;
     
-    struct circular_array *input_queue = new_circular_array();
-    struct circular_array *ready_queue = new_circular_array();
+    circ_array_t *input_queue = new_circular_array();
+    circ_array_t *ready_queue = new_circular_array();
+    memory_t *memory = new_mem_array();
 
     while (1){
         if (running_process != NULL){
@@ -105,6 +108,13 @@ void manage_processes(FILE *fp, char *scheduler, char *memory_strategy, int quan
                     max_overhead = overhead_time;
                 }
                 num_processes++;
+                deallocate(memory, running_process);
+                /*if (simulation_time == 210){
+                    for (int i = 0; i < MEM_SIZE; i++){
+                        printf("%c ", memory->mem_array[i]);
+                    }
+                    printf("\n");
+                }*/
                 free(running_process);
                 running_process = NULL;
             }
@@ -119,6 +129,7 @@ void manage_processes(FILE *fp, char *scheduler, char *memory_strategy, int quan
                 process.serv_time = serv_time;
                 process.serv_time_remaining = serv_time;
                 process.mem_req = mem_req;
+                process.mem_addr = INIT_ADDR;
                 enqueue(input_queue, &process);
             }
             else {
@@ -128,14 +139,7 @@ void manage_processes(FILE *fp, char *scheduler, char *memory_strategy, int quan
             last_fp = ftell(fp);
         }
 
-        if (strcmp(memory_strategy, INF) == 0){
-            // There is infinite memory, all arrived processes automatically enter the READY state
-            for (int i = 0; i < input_queue->size; i++){
-                process_t *ready_process = dequeue(input_queue);
-                enqueue(ready_queue, ready_process);
-            }
-            
-        }
+        allocate_memory(input_queue, ready_queue, memory, memory_strategy, simulation_time);
         
         schedule(ready_queue, scheduler, &running_process, simulation_time);
         
@@ -148,11 +152,37 @@ void manage_processes(FILE *fp, char *scheduler, char *memory_strategy, int quan
         }
         simulation_time += quantum;
     }
+    free(memory);
     free_array(input_queue);
     free_array(ready_queue);
 }
 
-void schedule(struct circular_array *ready_queue, char *scheduler, process_t **running_process, long simulation_time){
+void allocate_memory(circ_array_t *input_queue, circ_array_t *ready_queue, memory_t *memory, char *memory_strategy, long simulation_time){
+    if (strcmp(memory_strategy, INF) == 0){
+        // There is infinite memory, all arrived processes automatically enter the READY state
+        for (int i = 0; i < input_queue->size; i++){
+            process_t *ready_process = dequeue(input_queue);
+            enqueue(ready_queue, ready_process);
+            free(ready_process);
+        }
+    }
+    else {
+        // Default to Best-Fit memory allocation algorithm otherwise
+        int input_queue_size = input_queue->size;
+        for (int i = 0; i < input_queue->size; i++){
+            process_t *process = get_process(input_queue, i);
+            if (allocate_best_fit(memory, process) != INIT_ADDR){
+                printf("%ld,READY,process_name=%s,assigned_at=%d\n", simulation_time, process->name, process->mem_addr);
+                process_t *ready_process = remove_process(input_queue, i);
+                enqueue(ready_queue, ready_process);
+                free(ready_process);
+                i--;
+            }
+        }
+    }
+}
+
+void schedule(circ_array_t *ready_queue, char *scheduler, process_t **running_process, long simulation_time){
     if (strcmp(scheduler, SJF) == 0){
         if (*running_process == NULL && ready_queue->size > 0){
             // Make a temporary array to use with qsort()
@@ -163,6 +193,7 @@ void schedule(struct circular_array *ready_queue, char *scheduler, process_t **r
                 temp_array[i].serv_time = get_process(ready_queue, i)->serv_time;
                 temp_array[i].serv_time_remaining = get_process(ready_queue, i)->serv_time_remaining;
                 temp_array[i].mem_req = get_process(ready_queue, i)->mem_req;
+                temp_array[i].mem_addr = get_process(ready_queue, i)->mem_addr;
             }
 
             qsort(temp_array, ready_queue->size, sizeof(process_t), qsort_comparator);

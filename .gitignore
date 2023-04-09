@@ -1,5 +1,6 @@
 *.o
 allocate
 circular_array
+memory
 cases
 .vscode
