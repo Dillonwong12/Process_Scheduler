@@ -13,6 +13,8 @@
 #include "circular_array.h"
 #include "memory.h"
 
+#define IMPLEMENTS_REAL_PROCESS
+
 // The number of expected command line arguments
 #define N_ARGC 9
 // The number of bytes after converting an integer value to byte array
@@ -374,7 +376,7 @@ void create_process(process_t *running_process, long simulation_time){
         write(running_process->fd_1[1], byte_array, N_BYTES);
         read(running_process->fd_2[0], &read_byte, sizeof(read_byte));
         if (read_byte != byte_array[N_BYTES-1]){
-            exit(EXIT_FAILURE);
+            perror("incorrect byte");
         }
     }
 }
@@ -392,7 +394,7 @@ void resume_process(process_t *running_process, long simulation_time){
     kill(running_process->pid, SIGCONT);
     read(running_process->fd_2[0], &read_byte, sizeof(read_byte));
     if (read_byte != byte_array[N_BYTES-1]){
-        exit(EXIT_FAILURE);
+        perror("incorrect byte");
     }
 }
 
