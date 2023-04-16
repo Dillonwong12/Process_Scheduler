@@ -11,4 +11,4 @@ memory.o: memory.h memory.c
 	gcc -Wall -c memory.c -g
 
 clean:
-	rm -rf allocate circular_array memory *.o
+	rm -rf allocate circular_array memory process *.o

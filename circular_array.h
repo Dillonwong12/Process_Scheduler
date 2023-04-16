@@ -14,11 +14,15 @@
 #define MAX_NAME_LEN 9
 // The initial indexes of `head` and `tail`
 #define INIT_IDX 0 
+// Read and write sides for the file descriptor array
+#define READ_WRITE 2
 
 /**
  * Each process has an arrival time, a unique name, a service time, and a memory requirement. `serv_time_remaining` is
  * used to keep track of the remaining service time of a process after each cycle of the process manager, and 
  * `mem_addr` is used to keep track of the memory address that the allocation for a process starts at. 
+ * `pid` is the process id of the real process, and `fd_1`/`fd_2` are the arrays of file descriptors used for allowing
+ * two-way communication between parent and child processes with pipe()
 */ 
 typedef struct process{
     unsigned int time_arr;
@@ -27,6 +31,8 @@ typedef struct process{
     int mem_req;
     long serv_time_remaining;
     int mem_addr;
+    int pid;
+    int fd_1[READ_WRITE], fd_2[READ_WRITE];
 } process_t;
 
 /**
