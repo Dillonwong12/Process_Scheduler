@@ -322,7 +322,11 @@ void print_performance_stats(long total_turnaround, long num_processes, double t
  * Converts a given `value` from long to an array of `bytes` in Big Endian ordering
 */
 void to_byte_array(long value, uint8_t *bytes){
-    // Right shift for multiples of 8, and apply the bitwise AND operator to extract each 8-bit chunk of `value` 
+    /* Right shift for multiples of 8, and apply the bitwise AND operator to extract each 8-bit chunk of `value`.
+    This function was referenced from Lundin. 
+    https://stackoverflow.com/questions/22605399/integer-to-byte-array-little-endian-and-vice-versa.
+    24/3/2014. Accessed on 14/4/2023. Modified to work with long instead of uint32_t. */  
+
     bytes[0] = (uint8_t)((value >> 24)&0xFF);
     bytes[1] = (uint8_t)((value >> 16)&0xFF);
     bytes[2] = (uint8_t)((value >> 8)&0xFF);
